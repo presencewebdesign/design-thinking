@@ -33,7 +33,8 @@ A Vue.js application that helps UX researchers, designers, and product teams map
 - 🔄 **Flexible phase management** - add, remove, and rename phases
 - 📊 **Three-dimensional categorization** (Thinking, Doing, Feeling)
 - 💾 **Local data persistence** - your work is automatically saved
-- 📤 **Data export** functionality
+- 📤 **Data export** functionality - save your progress as JSON files
+- 📥 **Data import** functionality - load previously saved work
 - 📱 **Responsive design** that works on desktop and tablet
 - 🎨 **Modern, intuitive UI** with smooth animations
 
@@ -97,7 +98,26 @@ npm run preview
 2. **Create Notepads**: Use the sidebar to add new notepads with your research findings
 3. **Organize Insights**: Drag notepads from the sidebar to the appropriate phase and category (Thinking, Doing, or Feeling)
 4. **Edit Content**: Click on any notepad to edit its content
-5. **Export Data**: Use the "Export Data" button to save your research for further analysis
+5. **Save Progress**: Use the "Export Data" button to save your research as a JSON file
+6. **Load Previous Work**: Use the "Import Data" button to load previously exported files
+
+## Saving and Loading Your Work
+
+### Export (Save Progress)
+
+- Click the **"Export Data"** button to save your current work
+- This creates a JSON file containing all your phases, notepads, and their positions
+- The file includes a timestamp of when it was exported
+- You can save multiple versions of your work
+
+### Import (Load Progress)
+
+- Click the **"Import Data"** button to load previously saved work
+- Select a JSON file that was exported from this app
+- The app will validate the file format and restore your work exactly as it was saved
+- You'll see a confirmation message showing when the data was originally exported
+
+**Note**: Importing will replace your current work, so make sure to export first if you want to keep your current progress.
 
 ## Available Scripts
 
