@@ -10,6 +10,14 @@
         <button @click="addPhase" class="btn btn-primary">Add Phase</button>
         <button @click="toggleSidebar" class="btn btn-secondary">Toggle Notepad Sidebar</button>
         <button @click="exportData" class="btn btn-export">Export Data</button>
+        <button @click="importData" class="btn btn-import">Import Data</button>
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".json"
+          @change="handleFileImport"
+          style="display: none"
+        />
       </div>
       <div class="instructions">
         <p>
@@ -160,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import draggable from 'vuedraggable'
 
 interface Notepad {
@@ -177,7 +185,14 @@ interface Phase {
   [key: string]: string | Notepad[]
 }
 
+interface ImportData {
+  phases: Phase[]
+  availableNotepads: Notepad[]
+  exportedAt: string
+}
+
 const phases = ref<Phase[]>([])
+const fileInput = ref<HTMLInputElement>()
 
 const rowTypes = [
   { key: 'thinking', label: 'Thinking', icon: '🧠' },
@@ -263,7 +278,7 @@ const addNewNotepad = () => {
   showEditModal.value = true
 }
 
-const dragStart = (event: any) => {
+const dragStart = (event: { originalEvent?: Event }) => {
   isDragging.value = true
   console.log('Drag started', event)
   // Add dragging class to body for global styles
@@ -275,7 +290,7 @@ const dragStart = (event: any) => {
   }
 }
 
-const dragEnd = (event: any) => {
+const dragEnd = (event: { originalEvent?: Event }) => {
   isDragging.value = false
   console.log('Drag ended', event)
   // Remove dragging class from body
@@ -343,7 +358,11 @@ const exportData = () => {
   URL.revokeObjectURL(url)
 }
 
-const onNotepadAdded = (event: any) => {
+const onNotepadAdded = (event: {
+  added?: { element: Notepad }
+  removed?: unknown
+  moved?: unknown
+}) => {
   console.log('Notepad added:', event)
   console.log('Event details:', {
     added: event.added,
@@ -362,7 +381,11 @@ const onNotepadAdded = (event: any) => {
   }
 }
 
-const onNotepadChange = (event: any) => {
+const onNotepadChange = (event: {
+  added?: { element: Notepad }
+  removed?: unknown
+  moved?: unknown
+}) => {
   console.log('Notepad change event:', event)
   console.log('Event details:', {
     added: event.added,
@@ -379,11 +402,11 @@ const onNotepadChange = (event: any) => {
   }
 }
 
-const onNotepadRemove = (event: any) => {
+const onNotepadRemove = (event: { removed?: unknown }) => {
   console.log('Notepad removed:', event)
 }
 
-const onNotepadUpdate = (event: any) => {
+const onNotepadUpdate = (event: { moved?: unknown }) => {
   console.log('Notepad updated:', event)
 }
 
@@ -391,23 +414,53 @@ const getNotepadArray = (phase: Phase, rowType: string) => {
   return phase[rowType as keyof Phase] as Notepad[]
 }
 
-const updateNotepadArray = (phaseIndex: number, rowType: string, value: Notepad[]) => {
-  const phase = phases.value[phaseIndex]
-  console.log(`Updating ${rowType} for phase ${phaseIndex}:`, value.length, 'notepads')
-  if (rowType === 'thinking') {
-    phase.thinking = value
-  } else if (rowType === 'doing') {
-    phase.doing = value
-  } else if (rowType === 'feeling') {
-    phase.feeling = value
-  }
-  console.log('Updated phase:', phase)
-}
-
 const getPhaseArray = (phaseIndex: number, rowType: string) => {
   const result = getNotepadArray(phases.value[phaseIndex], rowType)
   console.log(`Getting ${rowType} for phase ${phaseIndex}:`, result.length, 'notepads')
   return result
+}
+
+const importData = () => {
+  fileInput.value?.click()
+}
+
+const handleFileImport = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const content = e.target?.result as string
+      const data: ImportData = JSON.parse(content)
+
+      // Validate the imported data structure
+      if (
+        data.phases &&
+        Array.isArray(data.phases) &&
+        data.availableNotepads &&
+        Array.isArray(data.availableNotepads)
+      ) {
+        phases.value = data.phases
+        availableNotepads.value = data.availableNotepads
+
+        // Show success message
+        alert(`Successfully imported data from ${new Date(data.exportedAt).toLocaleString()}`)
+      } else {
+        throw new Error('Invalid data structure')
+      }
+    } catch (error) {
+      alert("Error importing file. Please make sure it's a valid JSON file exported from this app.")
+      console.error('Import error:', error)
+    }
+  }
+
+  reader.readAsText(file)
+
+  // Reset the file input
+  target.value = ''
 }
 
 onMounted(() => {
@@ -565,6 +618,18 @@ onMounted(() => {
   background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+}
+
+.btn-import {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+}
+
+.btn-import:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
 }
 
 .journey-map {
