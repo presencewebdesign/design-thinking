@@ -198,11 +198,13 @@
                     @mousedown.stop
                   ></textarea>
                   <button
-                    @click="removeNotepad(phaseIndex, rowType.key, notepad)"
-                    class="absolute top-1.5 right-1.5 rounded-md p-0.5 text-slate-300 opacity-0 group-hover:opacity-100 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                    @click.stop="removeNotepad(phaseIndex, rowType.key, notepad)"
+                    @mousedown.stop
+                    @pointerdown.stop
+                    class="absolute top-1.5 right-1.5 rounded-lg p-1.5 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
                   >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
@@ -522,6 +524,7 @@ const removeNotepad = (phaseIndex: number, rowType: string, notepad: Notepad) =>
   const index = row.findIndex((n) => n.id === notepad.id)
   if (index > -1) {
     row.splice(index, 1)
+    phases.value = [...phases.value]
   }
 }
 
