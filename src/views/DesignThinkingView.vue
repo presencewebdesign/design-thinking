@@ -1,204 +1,435 @@
 <template>
-  <div class="design-thinking-container" :class="{ dragging: isDragging }">
-    <header class="app-header">
-      <h1>Design Thinking - User Research Tool</h1>
-      <p>Map user journeys with Thinking, Doing, and Feeling across different phases</p>
-    </header>
+  <div
+    class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 relative"
+    :class="{ 'select-none': isDragging }"
+  >
+    <!-- Top bar -->
+    <header class="sticky top-0 z-40 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
+      <div class="mx-auto max-w-[1800px] px-6 py-4 flex items-center justify-between gap-6">
+        <div class="min-w-0">
+          <h1 class="text-xl font-semibold text-slate-900 tracking-tight truncate">
+            Design Thinking
+          </h1>
+          <p class="text-sm text-slate-500 mt-0.5 hidden sm:block">
+            {{ activeView === 'journey' ? 'Map user journeys across Thinking, Doing & Feeling' : 'Track and prioritise pain points with linked solutions' }}
+          </p>
+        </div>
 
-    <div class="controls">
-      <div class="phase-controls">
-        <button @click="addPhase" class="btn btn-primary">Add Phase</button>
-        <button @click="toggleSidebar" class="btn btn-secondary">Toggle Notepad Sidebar</button>
-        <button @click="exportData" class="btn btn-export">Export Data</button>
-        <button @click="importData" class="btn btn-import">Import Data</button>
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".json"
-          @change="handleFileImport"
-          style="display: none"
-        />
-      </div>
-      <div class="instructions">
-        <p>
-          💡 <strong>How to use:</strong> Drag notepads from the sidebar to any phase column. Drop
-          them in the specific row (Thinking 🧠, Doing ✋, or Feeling 💭) where they belong.
-        </p>
-        <p>
-          <small
-            >💡 <strong>Tip:</strong> Each row type has its own drop zone. Look for the dashed
-            borders and icons to know where to drop!</small
+        <!-- View Toggle -->
+        <div class="flex rounded-lg border border-slate-200 bg-slate-100/80 p-0.5 flex-shrink-0">
+          <button
+            @click="activeView = 'journey'"
+            class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-all"
+            :class="activeView === 'journey' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
           >
-        </p>
-      </div>
-    </div>
+            Journey Map
+          </button>
+          <button
+            @click="activeView = 'painpoints'"
+            class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-all"
+            :class="activeView === 'painpoints' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+          >
+            Pain Points
+          </button>
+        </div>
 
-    <div class="journey-map">
-      <!-- Phase Headers -->
-      <div class="phase-headers">
-        <div class="phase-header" v-for="(phase, index) in phases" :key="index">
-          <div class="phase-title">
-            <input v-model="phase.title" class="phase-input" placeholder="Phase name" />
-            <button @click="removePhase(index)" class="remove-btn">×</button>
-          </div>
-          <!-- Phase-level drop zone that appears during drag -->
-          <div class="phase-drop-zone" v-if="isDragging">
-            <span>Drop notepad here</span>
-          </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <template v-if="activeView === 'journey'">
+            <button
+              @click="addPhase"
+              class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 active:bg-indigo-800 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span class="hidden sm:inline">Add Phase</span>
+            </button>
+            <button
+              @click="toggleSidebar"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 active:bg-slate-100 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <span class="hidden sm:inline">Notepads</span>
+            </button>
+          </template>
+          <button
+            @click="exportData"
+            class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 active:bg-slate-100 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span class="hidden md:inline">Export</span>
+          </button>
+          <button
+            @click="importData"
+            class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 active:bg-slate-100 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            <span class="hidden md:inline">Import</span>
+          </button>
+          <input
+            ref="fileInput"
+            type="file"
+            accept=".json"
+            @change="handleFileImport"
+            class="hidden"
+          />
         </div>
       </div>
+    </header>
 
-      <!-- Journey Rows -->
-      <div class="journey-rows">
-        <div class="journey-row" v-for="rowType in rowTypes" :key="rowType.key">
-          <div class="row-label">
-            <div class="row-icon">{{ rowType.icon }}</div>
-            <span>{{ rowType.label }}</span>
-          </div>
+    <!-- Journey Map -->
+    <main v-if="activeView === 'journey'" class="mx-auto max-w-[1800px] px-6 py-6" :class="{ 'mr-80': showSidebar }">
+      <!-- Tip banner -->
+      <div
+        v-if="showTip"
+        class="mb-5 flex items-start gap-3 rounded-xl bg-indigo-50/70 border border-indigo-100 px-4 py-3"
+      >
+        <svg class="w-5 h-5 text-indigo-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="text-sm text-indigo-700 leading-relaxed flex-1">
+          Drag notepads from the sidebar into any cell. Drop them in the row
+          (<strong>Thinking</strong>, <strong>Doing</strong>, or <strong>Feeling</strong>)
+          where they belong.
+        </p>
+        <button @click="showTip = false" class="text-indigo-400 hover:text-indigo-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
-          <div class="row-content">
-            <div class="phase-column" v-for="(phase, phaseIndex) in phases" :key="phaseIndex">
-              <div class="notepad-container">
-                <!-- Draggable notepads for this specific row type -->
-                <draggable
-                  :list="getPhaseArray(phaseIndex, rowType.key)"
-                  group="notepads"
-                  class="notepad-list"
-                  item-key="id"
-                  @start="dragStart"
-                  @end="dragEnd"
-                  :animation="200"
-                  ghost-class="ghost-notepad"
-                  chosen-class="chosen-notepad"
-                  @add="onNotepadAdded"
-                  @change="onNotepadChange"
-                  @remove="onNotepadRemove"
-                  @update="onNotepadUpdate"
-                  :empty-insert-threshold="20"
-                  :force-fallback="false"
-                >
-                  <template #item="{ element: notepad }">
-                    <div class="notepad" :class="{ 'is-dragging': isDragging }">
-                      <div class="notepad-content">
-                        <textarea
-                          v-model="notepad.content"
-                          class="notepad-textarea"
-                          placeholder="Write your note here..."
-                          @blur="saveNotepad(notepad)"
-                        ></textarea>
-                      </div>
-                      <div class="notepad-actions">
-                        <button
-                          @click="removeNotepad(phaseIndex, rowType.key, notepad)"
-                          class="remove-notepad-btn"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  </template>
-                </draggable>
-              </div>
+      <!-- Grid table -->
+      <div class="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <!-- Phase Headers -->
+        <div class="grid" :style="gridTemplate">
+          <!-- Corner cell -->
+          <div class="bg-slate-50/80 border-b border-r border-slate-200/80 px-4 py-3"></div>
+          <!-- Phase columns -->
+          <div
+            v-for="(phase, index) in phases"
+            :key="'header-' + index"
+            class="border-b border-r border-slate-200/80 last:border-r-0 px-4 py-3 bg-slate-50/80"
+          >
+            <div class="flex items-center gap-2">
+              <input
+                v-model="phase.title"
+                class="flex-1 min-w-0 bg-transparent text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white rounded-md px-2 py-1 -ml-2 transition-all"
+                placeholder="Phase name"
+              />
+              <button
+                v-if="phases.length > 1"
+                @click="removePhase(index)"
+                class="rounded-md p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
+
+        <!-- Journey Rows -->
+        <div
+          v-for="(rowType, rowIndex) in rowTypes"
+          :key="rowType.key"
+          class="grid"
+          :style="gridTemplate"
+        >
+          <!-- Row label -->
+          <div
+            class="border-r border-b border-slate-200/80 px-4 py-4 flex items-center gap-2.5 bg-slate-50/50"
+            :class="{ 'border-b-0': rowIndex === rowTypes.length - 1 }"
+          >
+            <span class="text-lg">{{ rowType.icon }}</span>
+            <span class="text-sm font-medium text-slate-600">{{ rowType.label }}</span>
+          </div>
+
+          <!-- Phase cells -->
+          <div
+            v-for="(phase, phaseIndex) in phases"
+            :key="'cell-' + phaseIndex"
+            class="border-r border-b border-slate-200/80 last:border-r-0 p-3 min-h-[140px] transition-colors"
+            :class="{
+              'border-b-0': rowIndex === rowTypes.length - 1,
+              'bg-indigo-50/30': isDragging,
+            }"
+          >
+            <draggable
+              :list="getPhaseArray(phaseIndex, rowType.key)"
+              group="notepads"
+              class="flex flex-col gap-2 min-h-[100px] rounded-xl border-2 border-dashed p-2 transition-colors duration-200"
+              :class="
+                isDragging
+                  ? 'border-indigo-300 bg-indigo-50/50'
+                  : 'border-transparent hover:border-slate-200'
+              "
+              item-key="id"
+              @start="dragStart"
+              @end="dragEnd"
+              :animation="200"
+              ghost-class="drag-ghost"
+              chosen-class="drag-chosen"
+              @add="onNotepadAdded"
+              @change="onNotepadChange"
+              @remove="onNotepadRemove"
+              @update="onNotepadUpdate"
+              :empty-insert-threshold="30"
+              :force-fallback="true"
+              fallback-class="drag-fallback"
+            >
+              <template #item="{ element: notepad }">
+                <div
+                  class="notepad-item group relative rounded-xl border bg-white px-3 py-2.5 shadow-sm cursor-grab active:cursor-grabbing"
+                  :class="notepadBorder(rowType.key)"
+                >
+                  <textarea
+                    v-model="notepad.content"
+                    class="w-full min-h-[48px] resize-none bg-transparent text-sm text-slate-700 leading-relaxed placeholder-slate-400 focus:outline-none pointer-events-auto"
+                    placeholder="Write a note..."
+                    @blur="saveNotepad(notepad)"
+                    @mousedown.stop
+                  ></textarea>
+                  <button
+                    @click="removeNotepad(phaseIndex, rowType.key, notepad)"
+                    class="absolute top-1.5 right-1.5 rounded-md p-0.5 text-slate-300 opacity-0 group-hover:opacity-100 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </template>
+            </draggable>
+          </div>
+        </div>
       </div>
-    </div>
+    </main>
+
+    <!-- Pain Points View -->
+    <PainPointsTracker
+      v-if="activeView === 'painpoints'"
+      :pain-points="painPoints"
+      :solutions="solutions"
+      @update:pain-points="painPoints = $event"
+      @update:solutions="solutions = $event"
+    />
 
     <!-- Notepad Sidebar -->
-    <div class="notepad-sidebar" :class="{ show: showSidebar }">
-      <div class="sidebar-header">
-        <h3>Available Notepads</h3>
-        <button @click="toggleSidebar" class="close-btn">×</button>
+    <aside
+      v-if="activeView === 'journey'"
+      class="fixed right-0 top-0 w-80 h-screen bg-white border-l border-slate-200 z-50 flex flex-col transition-transform duration-300 ease-out shadow-xl shadow-slate-200/50"
+      :class="showSidebar ? 'translate-x-0' : 'translate-x-full'"
+    >
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <h3 class="text-sm font-semibold text-slate-800">Available Notepads</h3>
+        <button
+          @click="toggleSidebar"
+          class="rounded-lg p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
-      <div class="sidebar-content">
-        <div class="sidebar-controls">
-          <button @click="addNewNotepad" class="btn btn-primary">Add New Notepad</button>
-        </div>
+
+      <div class="px-5 py-3 border-b border-slate-100">
+        <button
+          @click="addNewNotepad"
+          class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 active:bg-indigo-800 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          New Notepad
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto px-5 py-3">
         <draggable
           :list="availableNotepads"
           group="notepads"
-          class="sidebar-notepad-list"
+          class="flex flex-col gap-2 min-h-[40px]"
           item-key="id"
+          @start="dragStart"
+          @end="dragEnd"
           :animation="200"
-          ghost-class="ghost-notepad"
-          chosen-class="chosen-notepad"
-          :empty-insert-threshold="20"
-          :force-fallback="false"
+          ghost-class="drag-ghost"
+          chosen-class="drag-chosen"
+          :empty-insert-threshold="30"
+          :force-fallback="true"
+          fallback-class="drag-fallback"
         >
           <template #item="{ element: notepad }">
-            <div class="sidebar-notepad">
-              <div class="notepad-preview">
-                <div class="notepad-preview-content">{{ notepad.content || 'Empty notepad' }}</div>
-                <div class="notepad-preview-actions">
-                  <button @click="editNotepadInSidebar(notepad)" class="edit-btn">✏️</button>
-                  <button @click="removeNotepadFromSidebar(notepad)" class="remove-btn-small">
-                    ×
-                  </button>
-                </div>
+            <div
+              class="notepad-item group relative rounded-xl border border-amber-200/80 bg-amber-50/60 px-3 py-2.5 shadow-sm cursor-grab active:cursor-grabbing hover:border-amber-300 hover:shadow-md"
+            >
+              <p class="text-sm text-slate-700 leading-relaxed pr-12 min-h-[20px] select-none">
+                {{ notepad.content || 'Empty notepad' }}
+              </p>
+              <div class="absolute top-1.5 right-1.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  @click.stop="editNotepadInSidebar(notepad)"
+                  class="rounded-md p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button
+                  @click.stop="removeNotepadFromSidebar(notepad)"
+                  class="rounded-md p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
           </template>
         </draggable>
+
+        <p v-if="availableNotepads.length === 0" class="text-center text-sm text-slate-400 py-8">
+          No notepads yet. Add one above.
+        </p>
       </div>
-    </div>
+    </aside>
 
     <!-- Edit Modal -->
-    <div class="modal-overlay" v-if="showEditModal" @click="closeEditModal">
-      <div class="modal" @click.stop>
-        <div class="modal-header">
-          <h3>Edit Notepad</h3>
-          <button @click="closeEditModal" class="close-btn">×</button>
+    <Teleport to="body">
+      <Transition
+        enter-active-class="duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showEditModal"
+          class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+          @click="closeEditModal"
+        >
+          <Transition
+            enter-active-class="duration-200 ease-out"
+            enter-from-class="opacity-0 scale-95 translate-y-2"
+            enter-to-class="opacity-100 scale-100 translate-y-0"
+            leave-active-class="duration-150 ease-in"
+            leave-from-class="opacity-100 scale-100 translate-y-0"
+            leave-to-class="opacity-0 scale-95 translate-y-2"
+          >
+            <div
+              v-if="showEditModal"
+              class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              @click.stop
+            >
+              <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <h3 class="text-base font-semibold text-slate-800">Edit Notepad</h3>
+                <button
+                  @click="closeEditModal"
+                  class="rounded-lg p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div class="p-6">
+                <textarea
+                  v-model="editingNotepadContent"
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 leading-relaxed placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 transition-all resize-none"
+                  placeholder="Write your note here..."
+                  rows="5"
+                ></textarea>
+              </div>
+              <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+                <button
+                  @click="closeEditModal"
+                  class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  @click="saveEditModal"
+                  class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition-colors"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </Transition>
         </div>
-        <div class="modal-content">
-          <textarea
-            v-model="editingNotepadContent"
-            class="modal-textarea"
-            placeholder="Write your note here..."
-            rows="6"
-          ></textarea>
-        </div>
-        <div class="modal-actions">
-          <button @click="saveEditModal" class="btn btn-primary">Save</button>
-          <button @click="closeEditModal" class="btn btn-secondary">Cancel</button>
-        </div>
-      </div>
-    </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import draggable from 'vuedraggable'
+import type { Notepad, Phase, ImportData, PainPoint, Solution } from '@/types'
+import PainPointsTracker from '@/components/PainPointsTracker.vue'
 
-interface Notepad {
-  id: string
-  content: string
-  createdAt: Date
+const SESSION_KEY = 'design-thinking-session'
+
+function saveToSession() {
+  const data = {
+    phases: phases.value,
+    availableNotepads: availableNotepads.value,
+    painPoints: painPoints.value,
+    solutions: solutions.value,
+  }
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(data))
 }
 
-interface Phase {
-  title: string
-  thinking: Notepad[]
-  doing: Notepad[]
-  feeling: Notepad[]
-  [key: string]: string | Notepad[]
+function loadFromSession() {
+  const raw = sessionStorage.getItem(SESSION_KEY)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as {
+      phases: Phase[]
+      availableNotepads: Notepad[]
+      painPoints?: PainPoint[]
+      solutions?: Solution[]
+    }
+  } catch {
+    return null
+  }
 }
 
-interface ImportData {
-  phases: Phase[]
-  availableNotepads: Notepad[]
-  exportedAt: string
-}
-
+const activeView = ref<'journey' | 'painpoints'>('journey')
 const phases = ref<Phase[]>([])
+const painPoints = ref<PainPoint[]>([])
+const solutions = ref<Solution[]>([])
 const fileInput = ref<HTMLInputElement>()
+const showTip = ref(true)
 
 const rowTypes = [
   { key: 'thinking', label: 'Thinking', icon: '🧠' },
   { key: 'doing', label: 'Doing', icon: '✋' },
   { key: 'feeling', label: 'Feeling', icon: '💭' },
 ]
+
+const gridTemplate = computed(() => {
+  const cols = phases.value.length
+  return { gridTemplateColumns: `140px repeat(${cols}, minmax(200px, 1fr))` }
+})
+
+function notepadBorder(rowKey: string) {
+  const map: Record<string, string> = {
+    thinking: 'border-sky-200/80 bg-sky-50/30',
+    doing: 'border-emerald-200/80 bg-emerald-50/30',
+    feeling: 'border-violet-200/80 bg-violet-50/30',
+  }
+  return map[rowKey] ?? 'border-slate-200'
+}
 
 const availableNotepads = ref<Notepad[]>([])
 const showSidebar = ref(false)
@@ -222,7 +453,6 @@ const phaseNotepads = computed(() => {
   }))
 })
 
-// Watch for changes in phaseNotepads and sync back to phases
 watch(
   phaseNotepads,
   (newValue) => {
@@ -237,14 +467,7 @@ watch(
   { deep: true },
 )
 
-// Watch phases for changes to ensure reactivity
-watch(
-  phases,
-  () => {
-    console.log('Phases updated:', phases.value)
-  },
-  { deep: true },
-)
+watch([phases, availableNotepads, painPoints, solutions], saveToSession, { deep: true })
 
 const generateId = () => Math.random().toString(36).substr(2, 9)
 
@@ -278,33 +501,19 @@ const addNewNotepad = () => {
   showEditModal.value = true
 }
 
-const dragStart = (event: { originalEvent?: Event }) => {
+const dragStart = () => {
   isDragging.value = true
-  console.log('Drag started', event)
-  // Add dragging class to body for global styles
-  document.body.classList.add('dragging')
-
-  // Prevent text selection during drag
-  if (event.originalEvent) {
-    event.originalEvent.preventDefault()
-  }
 }
 
-const dragEnd = (event: { originalEvent?: Event }) => {
+const dragEnd = () => {
   isDragging.value = false
-  console.log('Drag ended', event)
-  // Remove dragging class from body
-  document.body.classList.remove('dragging')
-
-  // Force a small delay to ensure drop zones are properly updated
   setTimeout(() => {
     phases.value = [...phases.value]
   }, 50)
 }
 
-const saveNotepad = (notepad: Notepad) => {
-  // Save notepad content - could be extended to save to localStorage or backend
-  console.log('Saving notepad:', notepad)
+const saveNotepad = (_notepad: Notepad) => {
+  // Persistence is handled by the session storage watcher
 }
 
 const removeNotepad = (phaseIndex: number, rowType: string, notepad: Notepad) => {
@@ -347,13 +556,15 @@ const exportData = () => {
   const data = {
     phases: phases.value,
     availableNotepads: availableNotepads.value,
+    painPoints: painPoints.value,
+    solutions: solutions.value,
     exportedAt: new Date().toISOString(),
   }
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = 'ibm-design-thinking-data.json'
+  a.download = 'design-thinking-data.json'
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -363,61 +574,27 @@ const onNotepadAdded = (event: {
   removed?: unknown
   moved?: unknown
 }) => {
-  console.log('Notepad added:', event)
-  console.log('Event details:', {
-    added: event.added,
-    removed: event.removed,
-    moved: event.moved,
-  })
-
-  // With vuedraggable groups, notepads are automatically moved between lists
-  // No need to manually remove from availableNotepads as it's handled by the group
   if (event.added) {
-    console.log('Notepad added to phase:', event.added.element)
-    // Force reactivity update to ensure UI updates
     setTimeout(() => {
       phases.value = [...phases.value]
     }, 10)
   }
 }
 
-const onNotepadChange = (event: {
-  added?: { element: Notepad }
-  removed?: unknown
-  moved?: unknown
-}) => {
-  console.log('Notepad change event:', event)
-  console.log('Event details:', {
-    added: event.added,
-    removed: event.removed,
-    moved: event.moved,
-  })
-
-  // Force reactivity update
+const onNotepadChange = () => {
   phases.value = [...phases.value]
-
-  // If a notepad was added, ensure it's properly placed
-  if (event.added) {
-    console.log('Notepad added in change event:', event.added)
-  }
 }
 
-const onNotepadRemove = (event: { removed?: unknown }) => {
-  console.log('Notepad removed:', event)
-}
+const onNotepadRemove = () => {}
 
-const onNotepadUpdate = (event: { moved?: unknown }) => {
-  console.log('Notepad updated:', event)
-}
+const onNotepadUpdate = () => {}
 
 const getNotepadArray = (phase: Phase, rowType: string) => {
   return phase[rowType as keyof Phase] as Notepad[]
 }
 
 const getPhaseArray = (phaseIndex: number, rowType: string) => {
-  const result = getNotepadArray(phases.value[phaseIndex], rowType)
-  console.log(`Getting ${rowType} for phase ${phaseIndex}:`, result.length, 'notepads')
-  return result
+  return getNotepadArray(phases.value[phaseIndex], rowType)
 }
 
 const importData = () => {
@@ -436,7 +613,6 @@ const handleFileImport = (event: Event) => {
       const content = e.target?.result as string
       const data: ImportData = JSON.parse(content)
 
-      // Validate the imported data structure
       if (
         data.phases &&
         Array.isArray(data.phases) &&
@@ -445,8 +621,8 @@ const handleFileImport = (event: Event) => {
       ) {
         phases.value = data.phases
         availableNotepads.value = data.availableNotepads
-
-        // Show success message
+        painPoints.value = data.painPoints ?? []
+        solutions.value = data.solutions ?? []
         alert(`Successfully imported data from ${new Date(data.exportedAt).toLocaleString()}`)
       } else {
         throw new Error('Invalid data structure')
@@ -458,14 +634,20 @@ const handleFileImport = (event: Event) => {
   }
 
   reader.readAsText(file)
-
-  // Reset the file input
   target.value = ''
 }
 
 onMounted(() => {
-  // Initialize with some sample data
-  const sampleNotepads: Notepad[] = [
+  const saved = loadFromSession()
+  if (saved) {
+    phases.value = saved.phases
+    availableNotepads.value = saved.availableNotepads
+    painPoints.value = saved.painPoints ?? []
+    solutions.value = saved.solutions ?? []
+    return
+  }
+
+  availableNotepads.value = [
     { id: generateId(), content: 'Do I have everything packed?', createdAt: new Date() },
     { id: generateId(), content: 'Will my flight be on time?', createdAt: new Date() },
     { id: generateId(), content: 'How do I get to my hotel?', createdAt: new Date() },
@@ -479,961 +661,33 @@ onMounted(() => {
     { id: generateId(), content: 'Tired, disoriented', createdAt: new Date() },
     { id: generateId(), content: 'Curious, eager', createdAt: new Date() },
   ]
-  availableNotepads.value = sampleNotepads
 })
 </script>
 
-<style scoped>
-.design-thinking-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-  font-family:
-    'Inter',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  position: relative;
-  z-index: 1;
+<style>
+/* vuedraggable ghost/chosen/fallback classes are applied to cloned DOM
+   elements outside the scoped component, so they must be global. */
+.drag-ghost {
+  opacity: 0.4 !important;
 }
 
-.app-header {
-  text-align: center;
-  color: white;
-  margin-bottom: 40px;
-  padding: 40px 0;
-}
-
-.app-header h1 {
-  font-size: 3rem;
-  margin-bottom: 16px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.app-header p {
-  font-size: 1.2rem;
-  opacity: 0.9;
-  font-weight: 400;
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
-.controls {
-  margin-bottom: 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.phase-controls {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.instructions {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 16px 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
-  text-align: center;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.instructions p {
-  margin: 0;
-  color: #374151;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  letter-spacing: 0.025em;
-}
-
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.btn:hover::before {
-  left: 100%;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-}
-
-.btn-secondary {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
-}
-
-.btn-secondary:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-}
-
-.btn-export {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
-}
-
-.btn-export:hover {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
-}
-
-.btn-import {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  color: white;
-  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
-}
-
-.btn-import:hover {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
-}
-
-.journey-map {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  margin-right: 320px;
-  transition: margin-right 0.3s ease;
-  position: relative;
-  z-index: 10;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.journey-map.sidebar-closed {
-  margin-right: 20px;
-}
-
-.phase-headers {
-  display: flex;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 2px solid #e2e8f0;
-}
-
-.phase-header {
-  flex: 1;
-  min-width: 200px;
-  padding: 20px;
-  border-right: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
-}
-
-.phase-header:hover {
-  background: rgba(59, 130, 246, 0.05);
-}
-
-.phase-header:last-child {
-  border-right: none;
-}
-
-.phase-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.phase-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  font-family: inherit;
-}
-
-.phase-input:focus {
-  outline: none;
-  background: rgba(59, 130, 246, 0.1);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.remove-btn {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  margin-left: 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-}
-
-.remove-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-}
-
-.journey-rows {
-  display: flex;
-  flex-direction: column;
-}
-
-.journey-row {
-  display: flex;
-  border-bottom: 1px solid #e2e8f0;
-  position: relative;
-  z-index: 1;
-  pointer-events: auto;
-  transition: all 0.3s ease;
-}
-
-.journey-row:hover {
-  background: rgba(59, 130, 246, 0.02);
-}
-
-.journey-row:last-child {
-  border-bottom: none;
-}
-
-.row-label {
-  width: 150px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  padding: 24px 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 600;
-  color: #1e293b;
-  border-right: 2px solid #e2e8f0;
-  transition: all 0.3s ease;
-}
-
-.row-label:hover {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-}
-
-.row-icon {
-  font-size: 24px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-.row-content {
-  display: flex;
-  flex: 1;
-  position: relative;
-  z-index: 1;
-  pointer-events: auto;
-}
-
-.phase-column {
-  flex: 1;
-  min-width: 200px;
-  padding: 20px;
-  border-right: 1px solid #e2e8f0;
-  min-height: 140px;
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 1;
-  pointer-events: auto;
-}
-
-.phase-column:hover {
-  background: rgba(59, 130, 246, 0.02);
-  z-index: 20;
-}
-
-.phase-column:last-child {
-  border-right: none;
-}
-
-.notepad-container {
-  min-height: 100px;
-  border: 2px dashed #e2e8f0;
-  border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 16px;
-  background: rgba(248, 250, 252, 0.5);
-  position: relative;
-  z-index: 1;
-  pointer-events: auto;
-}
-
-.notepad-container:hover {
-  border-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.05);
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
-  z-index: 50;
-}
-
-.notepad-list {
-  min-height: 80px;
-  position: relative;
-  z-index: 10;
-  border: 2px dashed transparent;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  padding: 8px;
-}
-
-.notepad-list:empty {
-  border-color: #2196f3;
-  background: rgba(33, 150, 243, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.notepad-list:empty::before {
-  content: 'Drop notepads here';
-  color: #2196f3;
-  font-size: 14px;
-  font-style: italic;
-  opacity: 0.7;
-}
-
-.notepad-list:empty:hover {
-  border-color: #1976d2;
-  background: rgba(33, 150, 243, 0.1);
-}
-
-.notepad-list:empty:hover::before {
-  opacity: 1;
-}
-
-.drop-zone {
-  border: 2px dashed #2196f3;
-  background: rgba(33, 150, 243, 0.05);
-  min-height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  margin: 8px 0;
-  transition: all 0.3s ease;
-  color: #2196f3;
-  font-size: 14px;
-  font-style: italic;
-  opacity: 0.7;
-  position: relative;
-  z-index: 10;
-}
-
-.drop-zone:hover {
-  border-color: #1976d2;
-  background: rgba(33, 150, 243, 0.1);
-  opacity: 1;
-}
-
-.drop-zone.has-notepads {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  opacity: 0.9;
-}
-
-.drop-zone-indicator {
-  border: 2px dashed #2196f3;
-  background: rgba(33, 150, 243, 0.05);
-  min-height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  margin: 8px 0;
-  transition: all 0.3s ease;
-  color: #2196f3;
-  font-size: 14px;
-  font-style: italic;
-  opacity: 0.7;
-  position: relative;
-  z-index: 10;
-}
-
-.drop-zone-indicator:hover {
-  border-color: #1976d2;
-  background: rgba(33, 150, 243, 0.1);
-  opacity: 1;
+.drag-chosen {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  ring: 2px solid #818cf8 !important;
+  outline: 2px solid #818cf8 !important;
+  outline-offset: 1px;
   transform: scale(1.02);
 }
 
-.drop-zone-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-align: center;
+.drag-fallback {
+  opacity: 0.9 !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  transform: rotate(2deg) !important;
 }
 
-.drop-zone-icon {
-  font-size: 24px;
-  opacity: 0.8;
-}
-
-.phase-drop-zone {
-  background: rgba(33, 150, 243, 0.1);
-  border: 2px dashed #2196f3;
-  border-radius: 8px;
-  padding: 12px;
-  margin-top: 8px;
-  text-align: center;
-  color: #2196f3;
-  font-size: 14px;
-  font-weight: 500;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 0.7;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
-  100% {
-    opacity: 0.7;
-    transform: scale(1);
-  }
-}
-
-.notepad {
-  cursor: grab;
+.notepad-item {
   user-select: none;
   -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   touch-action: none;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 1px solid #f59e0b;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  z-index: 1;
-  pointer-events: auto;
-}
-
-.notepad:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.25);
-  z-index: 2;
-}
-
-.notepad.is-dragging {
-  opacity: 0.6;
-  transform: rotate(2deg) scale(1.05);
-  z-index: 2;
-  pointer-events: none;
-}
-
-.ghost-notepad {
-  opacity: 0.5;
-  transform: rotate(5deg);
-  z-index: 1000;
-}
-
-.chosen-notepad {
-  opacity: 0.8;
-  transform: scale(1.05);
-  z-index: 1000;
-}
-
-.fallback-notepad {
-  opacity: 0.8;
-  transform: rotate(5deg);
-  z-index: 1000;
-  pointer-events: none;
-}
-
-.notepad-content {
-  margin-bottom: 12px;
-}
-
-.notepad-textarea {
-  width: 100%;
-  min-height: 60px;
-  border: none;
-  background: transparent;
-  resize: vertical;
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #1e293b;
-  font-weight: 500;
-}
-
-.notepad-textarea:focus {
-  outline: none;
-}
-
-.notepad-textarea::placeholder {
-  color: #94a3b8;
-  font-style: italic;
-}
-
-.notepad-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.remove-notepad-btn {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  font-size: 12px;
-  line-height: 1;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
-}
-
-.remove-notepad-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-}
-
-.notepad-sidebar {
-  position: fixed;
-  right: 0;
-  top: 0;
-  width: 320px;
-  height: 100vh;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: auto;
-  border-left: 1px solid #e2e8f0;
-}
-
-.notepad-sidebar.show {
-  transform: translateX(0);
-}
-
-.sidebar-header {
-  padding: 24px;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-}
-
-.sidebar-header h3 {
-  margin: 0;
-  color: #1e293b;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.close-btn {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-}
-
-.close-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-}
-
-.sidebar-content {
-  padding: 24px;
-  overflow-y: auto;
-  height: calc(100vh - 80px);
-}
-
-.sidebar-controls {
-  margin-bottom: 24px;
-}
-
-.sidebar-notepad {
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  touch-action: none;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 1px solid #f59e0b;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-  cursor: grab;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
-}
-
-.sidebar-notepad:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.25);
-}
-
-.sidebar-notepad:active {
-  cursor: grabbing;
-}
-
-.notepad-preview-content {
-  font-size: 14px;
-  line-height: 1.5;
-  color: #1e293b;
-  margin-bottom: 12px;
-  word-wrap: break-word;
-  font-weight: 500;
-}
-
-.notepad-preview-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.edit-btn,
-.remove-btn-small {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 6px;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  color: #64748b;
-}
-
-.edit-btn:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-  transform: scale(1.1);
-}
-
-.remove-btn-small:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  transform: scale(1.1);
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-  backdrop-filter: blur(8px);
-}
-
-.modal {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 20px;
-  padding: 0;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.modal-header {
-  padding: 24px;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 20px 20px 0 0;
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: #1e293b;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.modal-content {
-  padding: 24px;
-}
-
-.modal-textarea {
-  width: 100%;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.5;
-  resize: vertical;
-  transition: all 0.3s ease;
-  background: #ffffff;
-  color: #1e293b;
-  font-weight: 500;
-}
-
-.modal-textarea:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.modal-textarea::placeholder {
-  color: #94a3b8;
-  font-style: italic;
-}
-
-.modal-actions {
-  padding: 24px;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 0 0 20px 20px;
-}
-
-@media (max-width: 768px) {
-  .design-thinking-container {
-    padding: 10px;
-  }
-
-  .app-header h1 {
-    font-size: 2rem;
-  }
-
-  .row-label {
-    width: 120px;
-    padding: 15px;
-  }
-
-  .phase-column {
-    min-width: 150px;
-    padding: 10px;
-  }
-
-  .journey-map {
-    margin-right: 20px;
-  }
-
-  .notepad-sidebar {
-    width: 100%;
-  }
-}
-
-/* Global styles for drag and drop */
-body.dragging .notepad-list {
-  z-index: 200 !important;
-  border-color: #2196f3 !important;
-  background: rgba(33, 150, 243, 0.15) !important;
-  box-shadow: 0 0 15px rgba(33, 150, 243, 0.4) !important;
-  transform: scale(1.02);
-}
-
-body.dragging .phase-drop-zone {
-  z-index: 200 !important;
-  border-color: #2196f3 !important;
-  background: rgba(33, 150, 243, 0.2) !important;
-  box-shadow: 0 0 15px rgba(33, 150, 243, 0.4) !important;
-}
-
-body.dragging .phase-column {
-  z-index: 150 !important;
-}
-
-body.dragging .journey-map {
-  z-index: 200 !important;
-}
-
-body.dragging .notepad-sidebar {
-  z-index: 50 !important;
-}
-
-/* Touch and drag improvements */
-.notepad-list {
-  min-height: 80px;
-  position: relative;
-  z-index: 10;
-  border: 2px dashed transparent;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  padding: 8px;
-}
-
-.notepad-list:empty {
-  border-color: #2196f3;
-  background: rgba(33, 150, 243, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.notepad-list:empty::before {
-  content: 'Drop notepads here';
-  color: #2196f3;
-  font-size: 14px;
-  font-style: italic;
-  opacity: 0.7;
-}
-
-.notepad-list:empty:hover {
-  border-color: #1976d2;
-  background: rgba(33, 150, 243, 0.1);
-}
-
-.notepad-list:empty:hover::before {
-  opacity: 1;
-}
-
-.ghost-notepad {
-  opacity: 0.5;
-  transform: rotate(5deg);
-  z-index: 1000;
-}
-
-.chosen-notepad {
-  opacity: 0.8;
-  transform: scale(1.05);
-  z-index: 1000;
-}
-
-.phase-drop-zone {
-  background: rgba(33, 150, 243, 0.1);
-  border: 2px dashed #2196f3;
-  border-radius: 8px;
-  padding: 12px;
-  margin-top: 8px;
-  text-align: center;
-  color: #2196f3;
-  font-size: 14px;
-  font-weight: 500;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 0.7;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
-  100% {
-    opacity: 0.7;
-    transform: scale(1);
-  }
-}
-
-/* Ensure notepads are draggable on touch devices */
-.sidebar-notepad-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 20px;
-}
-
-.sidebar-notepad {
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  touch-action: none;
-}
-
-.sidebar-notepad:active {
-  cursor: grabbing;
-}
-
-.notepad {
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  touch-action: none;
-}
-
-.notepad:active {
-  cursor: grabbing;
-}
-
-/* Prevent text selection during drag */
-.design-thinking-container.dragging * {
-  user-select: none !important;
-  -webkit-user-select: none !important;
-  -moz-user-select: none !important;
-  -ms-user-select: none !important;
 }
 </style>
