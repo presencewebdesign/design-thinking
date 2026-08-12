@@ -16,6 +16,7 @@ export interface ImportData {
   phases: Phase[]
   availableNotepads: Notepad[]
   painPoints?: PainPoint[]
+  whys?: Why[]
   solutions?: Solution[]
   exportedAt: string
 }
@@ -26,7 +27,14 @@ export interface PainPoint {
   id: string
   description: string
   priority: Priority
+  whyId: string | null
   solutionId: string | null
+  createdAt: Date
+}
+
+export interface Why {
+  id: string
+  description: string
   createdAt: Date
 }
 

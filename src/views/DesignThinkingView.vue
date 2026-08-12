@@ -11,7 +11,7 @@
             Design Thinking
           </h1>
           <p class="text-sm text-slate-500 mt-0.5 hidden sm:block">
-            {{ activeView === 'journey' ? 'Map user journeys across Thinking, Doing & Feeling' : 'Track and prioritise pain points with linked solutions' }}
+            {{ activeView === 'journey' ? 'Map user journeys across Thinking, Doing & Feeling' : activeView === 'graph' ? 'Visualise What → Why → How as a linked graph' : 'Track and prioritise pain points with linked solutions' }}
           </p>
         </div>
 
@@ -30,6 +30,13 @@
             :class="activeView === 'painpoints' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
           >
             Pain Points
+          </button>
+          <button
+            @click="activeView = 'graph'"
+            class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-all"
+            :class="activeView === 'graph' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+          >
+            Graph
           </button>
         </div>
 
@@ -215,12 +222,22 @@
       </div>
     </main>
 
+    <!-- Graph View -->
+    <GraphView
+      v-if="activeView === 'graph'"
+      :pain-points="painPoints"
+      :whys="whys"
+      :solutions="solutions"
+    />
+
     <!-- Pain Points View -->
     <PainPointsTracker
       v-if="activeView === 'painpoints'"
       :pain-points="painPoints"
+      :whys="whys"
       :solutions="solutions"
       @update:pain-points="painPoints = $event"
+      @update:whys="whys = $event"
       @update:solutions="solutions = $event"
     />
 
@@ -376,8 +393,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import draggable from 'vuedraggable'
-import type { Notepad, Phase, ImportData, PainPoint, Solution } from '@/types'
+import type { Notepad, Phase, ImportData, PainPoint, Why, Solution } from '@/types'
 import PainPointsTracker from '@/components/PainPointsTracker.vue'
+import GraphView from '@/components/GraphView.vue'
 
 const SESSION_KEY = 'design-thinking-session'
 
@@ -386,6 +404,7 @@ function saveToSession() {
     phases: phases.value,
     availableNotepads: availableNotepads.value,
     painPoints: painPoints.value,
+    whys: whys.value,
     solutions: solutions.value,
   }
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(data))
@@ -399,6 +418,7 @@ function loadFromSession() {
       phases: Phase[]
       availableNotepads: Notepad[]
       painPoints?: PainPoint[]
+      whys?: Why[]
       solutions?: Solution[]
     }
   } catch {
@@ -406,9 +426,10 @@ function loadFromSession() {
   }
 }
 
-const activeView = ref<'journey' | 'painpoints'>('journey')
+const activeView = ref<'journey' | 'painpoints' | 'graph'>('journey')
 const phases = ref<Phase[]>([])
 const painPoints = ref<PainPoint[]>([])
+const whys = ref<Why[]>([])
 const solutions = ref<Solution[]>([])
 const fileInput = ref<HTMLInputElement>()
 const showTip = ref(true)
@@ -469,7 +490,7 @@ watch(
   { deep: true },
 )
 
-watch([phases, availableNotepads, painPoints, solutions], saveToSession, { deep: true })
+watch([phases, availableNotepads, painPoints, whys, solutions], saveToSession, { deep: true })
 
 const generateId = () => Math.random().toString(36).substr(2, 9)
 
@@ -560,6 +581,7 @@ const exportData = () => {
     phases: phases.value,
     availableNotepads: availableNotepads.value,
     painPoints: painPoints.value,
+    whys: whys.value,
     solutions: solutions.value,
     exportedAt: new Date().toISOString(),
   }
@@ -625,6 +647,7 @@ const handleFileImport = (event: Event) => {
         phases.value = data.phases
         availableNotepads.value = data.availableNotepads
         painPoints.value = data.painPoints ?? []
+        whys.value = data.whys ?? []
         solutions.value = data.solutions ?? []
         alert(`Successfully imported data from ${new Date(data.exportedAt).toLocaleString()}`)
       } else {
@@ -646,6 +669,7 @@ onMounted(() => {
     phases.value = saved.phases
     availableNotepads.value = saved.availableNotepads
     painPoints.value = saved.painPoints ?? []
+    whys.value = saved.whys ?? []
     solutions.value = saved.solutions ?? []
     return
   }

@@ -19,7 +19,7 @@
       </button>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Pain Points Section -->
       <section>
         <div class="flex items-center justify-between mb-4">
@@ -27,7 +27,8 @@
             <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
-            Pain Points
+            What?
+            <span class="text-xs font-normal text-slate-400 italic ml-1">Pain Points</span>
             <span class="text-sm font-normal text-slate-400">({{ filteredPainPoints.length }})</span>
           </h2>
           <button
@@ -127,11 +128,23 @@
                       <option value="low">Low</option>
                     </select>
                     <select
+                      v-model="pp.whyId"
+                      @change="emitPainPoints"
+                      class="rounded-md border border-sky-200 bg-sky-50 px-2 py-1 text-xs text-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500/30 max-w-[180px] transition-all"
+                    >
+                      <option :value="null">No Why linked</option>
+                      <option
+                        v-for="why in localWhys"
+                        :key="why.id"
+                        :value="why.id"
+                      >{{ truncate(why.description, 30) }}</option>
+                    </select>
+                    <select
                       v-model="pp.solutionId"
                       @change="emitPainPoints"
-                      class="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 max-w-[200px] transition-all"
+                      class="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 max-w-[180px] transition-all"
                     >
-                      <option :value="null">Unassigned</option>
+                      <option :value="null">No How linked</option>
                       <option
                         v-for="sol in localSolutions"
                         :key="sol.id"
@@ -149,13 +162,19 @@
                   </svg>
                 </button>
               </div>
-              <!-- Linked Solution Badge -->
-              <div v-if="pp.solutionId && getSolution(pp.solutionId)" class="mt-2 pt-2 border-t border-slate-100">
-                <span class="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600">
+              <!-- Linked Why + Solution Badges -->
+              <div v-if="(pp.whyId && getWhy(pp.whyId)) || (pp.solutionId && getSolution(pp.solutionId))" class="mt-2 pt-2 border-t border-slate-100 flex flex-wrap gap-1.5">
+                <span v-if="pp.whyId && getWhy(pp.whyId)" class="inline-flex items-center gap-1 rounded-md bg-sky-50 px-2 py-0.5 text-xs text-sky-700">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {{ truncate(getWhy(pp.whyId)?.description ?? '', 35) }}
+                </span>
+                <span v-if="pp.solutionId && getSolution(pp.solutionId)" class="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                   </svg>
-                  {{ truncate(getSolution(pp.solutionId)?.description ?? '', 40) }}
+                  {{ truncate(getSolution(pp.solutionId)?.description ?? '', 35) }}
                 </span>
               </div>
             </div>
@@ -167,6 +186,130 @@
         </div>
       </section>
 
+      <!-- Why Section -->
+      <section>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-slate-800 flex items-center gap-2">
+            <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Why?
+            <span class="text-xs font-normal text-slate-400 italic ml-1">Root Cause</span>
+            <span class="text-sm font-normal text-slate-400">({{ localWhys.length }})</span>
+          </h2>
+          <button
+            @click="showAddWhy = !showAddWhy"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-sky-700 active:bg-sky-800 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add
+          </button>
+        </div>
+
+        <!-- Add Why Form -->
+        <Transition
+          enter-active-class="duration-200 ease-out"
+          enter-from-class="opacity-0 -translate-y-2"
+          enter-to-class="opacity-100 translate-y-0"
+          leave-active-class="duration-150 ease-in"
+          leave-from-class="opacity-100 translate-y-0"
+          leave-to-class="opacity-0 -translate-y-2"
+        >
+          <div
+            v-if="showAddWhy"
+            class="mb-4 rounded-xl border border-sky-200 bg-sky-50/30 p-4"
+          >
+            <textarea
+              v-model="newWhyDesc"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-300 resize-none transition-all"
+              placeholder="Why does this pain point matter?"
+              rows="2"
+              @keydown.meta.enter="addWhy"
+              @keydown.ctrl.enter="addWhy"
+            ></textarea>
+            <div class="flex items-center justify-end gap-2 mt-3">
+              <button
+                @click="showAddWhy = false; newWhyDesc = ''"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                @click="addWhy"
+                :disabled="!newWhyDesc.trim()"
+                class="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-sky-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Add Why
+              </button>
+            </div>
+          </div>
+        </Transition>
+
+        <!-- Why Cards -->
+        <div class="space-y-3">
+          <TransitionGroup
+            enter-active-class="duration-200 ease-out"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="duration-150 ease-in"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div
+              v-for="why in localWhys"
+              :key="why.id"
+              class="group relative rounded-xl border border-sky-200/80 bg-white px-4 py-3.5 shadow-sm transition-all hover:shadow-md"
+            >
+              <div class="flex items-start gap-3">
+                <div class="flex-1 min-w-0">
+                  <textarea
+                    v-model="why.description"
+                    class="w-full resize-none bg-transparent text-sm text-slate-700 leading-relaxed placeholder-slate-400 focus:outline-none"
+                    placeholder="Why does this matter? What's the root cause?"
+                    rows="2"
+                    @input="emitWhys"
+                  ></textarea>
+                </div>
+                <button
+                  @click="removeWhy(why.id)"
+                  class="rounded-md p-1 text-slate-300 opacity-0 group-hover:opacity-100 hover:text-rose-500 hover:bg-rose-50 transition-all flex-shrink-0"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Linked Pain Points -->
+              <div v-if="linkedPainPointsForWhy(why.id).length > 0" class="mt-2 pt-2 border-t border-slate-100">
+                <p class="text-[11px] uppercase tracking-wide font-semibold text-slate-400 mb-1.5">Linked Pain Points</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="lpp in linkedPainPointsForWhy(why.id)"
+                    :key="lpp.id"
+                    @click="scrollToPainPoint(lpp.id)"
+                    class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium transition-colors cursor-pointer hover:opacity-80"
+                    :class="priorityBadgeClass(lpp.priority)"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full" :class="priorityDotClass(lpp.priority)"></span>
+                    {{ truncate(lpp.description, 25) }}
+                  </button>
+                </div>
+              </div>
+              <p v-else class="mt-2 pt-2 border-t border-slate-100 text-xs text-slate-400 italic">
+                No pain points linked yet
+              </p>
+            </div>
+          </TransitionGroup>
+
+          <p v-if="localWhys.length === 0" class="text-center text-sm text-slate-400 py-10 rounded-xl border-2 border-dashed border-slate-200">
+            No reasons yet. Add one above.
+          </p>
+        </div>
+      </section>
+
       <!-- Solutions Section -->
       <section>
         <div class="flex items-center justify-between mb-4">
@@ -174,7 +317,8 @@
             <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
-            Solutions
+            How?
+            <span class="text-xs font-normal text-slate-400 italic ml-1">Solutions</span>
             <span class="text-sm font-normal text-slate-400">({{ localSolutions.length }})</span>
           </h2>
           <button
@@ -295,21 +439,28 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, nextTick } from 'vue'
-import type { PainPoint, Solution, Priority } from '@/types'
+import type { PainPoint, Why, Solution, Priority } from '@/types'
 
 const props = defineProps<{
   painPoints: PainPoint[]
+  whys: Why[]
   solutions: Solution[]
 }>()
 
 const emit = defineEmits<{
   'update:pain-points': [value: PainPoint[]]
+  'update:whys': [value: Why[]]
   'update:solutions': [value: Solution[]]
 }>()
 
 const localPainPoints = computed({
   get: () => props.painPoints,
   set: (val) => emit('update:pain-points', val),
+})
+
+const localWhys = computed({
+  get: () => props.whys,
+  set: (val) => emit('update:whys', val),
 })
 
 const localSolutions = computed({
@@ -319,9 +470,11 @@ const localSolutions = computed({
 
 const activeFilter = ref<Priority | 'all'>('all')
 const showAddPainPoint = ref(false)
+const showAddWhy = ref(false)
 const showAddSolution = ref(false)
 const newPainPointDesc = ref('')
 const newPainPointPriority = ref<Priority>('medium')
+const newWhyDesc = ref('')
 const newSolutionDesc = ref('')
 const highlightedPainPointId = ref<string | null>(null)
 const painPointRefs = reactive<Record<string, HTMLElement>>({})
@@ -355,8 +508,45 @@ function emitPainPoints() {
   emit('update:pain-points', [...localPainPoints.value])
 }
 
+function emitWhys() {
+  emit('update:whys', [...localWhys.value])
+}
+
 function emitSolutions() {
   emit('update:solutions', [...localSolutions.value])
+}
+
+function addWhy() {
+  if (!newWhyDesc.value.trim()) return
+  const why: Why = {
+    id: generateId(),
+    description: newWhyDesc.value.trim(),
+    createdAt: new Date(),
+  }
+  emit('update:whys', [...localWhys.value, why])
+  newWhyDesc.value = ''
+  showAddWhy.value = false
+}
+
+function removeWhy(id: string) {
+  // Unlink pain points that reference this why
+  const linkedPPs = localPainPoints.value.filter((pp) => pp.whyId === id)
+  if (linkedPPs.length > 0) {
+    if (!confirm(`This "Why" is linked to ${linkedPPs.length} pain point(s). Removing it will unlink them. Continue?`)) return
+    const updated = localPainPoints.value.map((pp) =>
+      pp.whyId === id ? { ...pp, whyId: null } : pp,
+    )
+    emit('update:pain-points', updated)
+  }
+  emit('update:whys', localWhys.value.filter((w) => w.id !== id))
+}
+
+function getWhy(id: string) {
+  return localWhys.value.find((w) => w.id === id)
+}
+
+function linkedPainPointsForWhy(whyId: string) {
+  return localPainPoints.value.filter((pp) => pp.whyId === whyId)
 }
 
 function addPainPoint() {
@@ -365,6 +555,7 @@ function addPainPoint() {
     id: generateId(),
     description: newPainPointDesc.value.trim(),
     priority: newPainPointPriority.value,
+    whyId: null,
     solutionId: null,
     createdAt: new Date(),
   }
@@ -401,6 +592,11 @@ function removeSolution(id: string) {
     emit('update:pain-points', updated)
   }
   emit('update:solutions', localSolutions.value.filter((s) => s.id !== id))
+}
+
+function scrollToWhy(id: string) {
+  // future: implement scroll-to-why if needed
+  void id
 }
 
 function getSolution(id: string) {
