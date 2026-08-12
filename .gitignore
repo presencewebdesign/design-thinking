@@ -28,3 +28,19 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+# MindGraph shared state (commit)
+!.mindgraph/
+!.mindgraph/README.md
+!.mindgraph/config.json
+!.mindgraph/nodes/
+!.mindgraph/nodes/**
+!.mindgraph/graph/
+!.mindgraph/graph/**
+# MindGraph local state (do not commit)
+.mindgraph/memory.db
+.mindgraph/memory.db-*
+.mindgraph/pending-session.json
+.mindgraph/graph.html
+.mindgraph/local.json
+.mindgraph/*.tmp.*
+.mindgraph/**/*.tmp.*
